@@ -1,6 +1,8 @@
 import math
+import seaborn as sns
 import matplotlib.pyplot as plt
-
+import numpy as np
+import pandas as pd
 
 def get_li(xi, x_set=[]):
     def li(Lx):
@@ -40,41 +42,52 @@ def get_basis_func_beta(xi, x_set=[]):
 
 
 def get_Hermite_interpolation(x=[], fx=[], deriv=[]):
-    set_of_func_alpha = []  # α(x)基函数集合
-    set_of_func_beta = []  # β(x)基函数集合
-    for each in x:  # 获得每个插值点的基函数
+    set_of_func_alpha = []
+    set_of_func_beta = []
+    for each in x:
         tmp_func = get_basis_func_alpha(each, x)
-        set_of_func_alpha.append(tmp_func)  # 将集合x中的每个元素对应的插值基函数保存
+        set_of_func_alpha.append(tmp_func)
         tmp_func = get_basis_func_beta(each, x)
-        set_of_func_beta.append(tmp_func)  # 将集合x中的每个元素对应的插值基函数保存
+        set_of_func_beta.append(tmp_func)
 
     def Hermite_interpolation(Hx):
         result = 0
         for index in range(len(x)):
-            result = result + fx[index] * set_of_func_alpha[index](Hx) + deriv[index] * set_of_func_beta[index](
-                Hx)  # 根据根据拉格朗日插值法计算Lx的值
+            result = result + fx[index] * set_of_func_alpha[index](Hx) + deriv[index] * set_of_func_beta[index](Hx)
         return result
 
     return Hermite_interpolation
 
 
 if __name__ == '__main__':
-    ''' 插值节点, 这里用二次函数生成插值节点，每两个节点x轴距离位10 '''
-    import math
+    data=[[0,0], [1,2]]
 
-    sr_x = [(i * math.pi) + (math.pi / 2) for i in range(-3, 3)]
-    sr_fx = [math.sin(i) for i in sr_x]
-    deriv = [0 for i in sr_x]  # 导数都为 0
-    Hx = get_Hermite_interpolation(sr_x, sr_fx, deriv)  # 获得插值函数
-    tmp_x = [i * 0.1 * math.pi for i in range(-20, 20)]  # 测试用例
-    tmp_y = [Hx(i) for i in tmp_x]  # 根据插值函数获得测试用例的纵坐标
+    x_values = [point[0] for point in data]
+    y_values = [point[1] for point in data]
+    derivatives = [0] * len(x_values)
 
-    ''' 画图 '''
-    import matplotlib.pyplot as plt
+    Hx = get_Hermite_interpolation(x_values, y_values, derivatives)
 
-    plt.figure("play")
+    tmp_x = [i * 0.1 * math.pi for i in range(-20, 20)]
+    tmp_y = [Hx(i) for i in tmp_x]
+
+    # 转换正无穷大为 NaN
+    tmp_x = np.array(tmp_x)
+    tmp_y = np.array(tmp_y)
+    tmp_x[np.isinf(tmp_x)] = np.nan
+    tmp_y[np.isinf(tmp_y)] = np.nan
+
+    plt.figure("Hermite Interpolation")
     ax1 = plt.subplot(211)
-    plt.sca(ax1)
-    plt.plot(sr_x, sr_fx, linestyle=' ', marker='o', color='b')
-    plt.plot(tmp_x, tmp_y, linestyle='--', color='r')
+
+    # 使用 Seaborn 绘制原始数据散点图
+    sns.scatterplot(x=[point[0] for point in data], y=[point[1] for point in data], color='b', ax=ax1)
+
+    # 使用 Seaborn 绘制插值结果线图
+    sns.lineplot(x=tmp_x, y=tmp_y, color='r', ax=ax1)
+
+    # 设置横纵坐标的上限为 -3 到 3
+    plt.xlim(-3, 3)  # 设置 x 轴的上限
+    plt.ylim(-3, 3)  # 设置 y 轴的上限
+
     plt.show()
