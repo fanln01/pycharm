@@ -1,34 +1,23 @@
 from matplotlib import pyplot as plt
+import seaborn as sns
 
 # 定义一个函数Lg，接受两个参数：data为训练数据，格式为列表的列表，每个子列表包含两个元素，分别表示 x 和 y 值；
 # testdata为要预测的数据点的 x 值
+from matplotlib import pyplot as plt
+
 def Lg(data, testdata):
-
-    # 初始化预测值
     predict = 0
-
-    # 从训练数据中提取 x 值和 y 值，分别存储在 data_x 和 data_y 中
     data_x = [data[i][0] for i in range(len(data))]
     data_y = [data[i][1] for i in range(len(data))]
-
-    # 检查测试数据是否已存在于训练数据中
     if testdata in data_x:
-        # 如果测试数据的 x 值在训练数据中，则直接返回对应的 y 值
+        #print "testdata is already known"
         return data_y[data_x.index(testdata)]
-
-        # 计算预测值
     for i in range(len(data_x)):
-        # 初始化亲和力函数值
         af = 1
         for j in range(len(data_x)):
             if j != i:
-                # 计算亲和力函数的值，这里使用的是拉格朗日插值的核函数形式
                 af *= (1.0 * (testdata - data_x[j]) / (data_x[i] - data_x[j]))
-    # 计算预测值
-    for i in range(len(data_x)):
-        # 根据拉格朗日插值公式，计算预测值
         predict += data_y[i] * af
-
     return predict
 def plot(data, nums):
     # 提取数据中的 x 和 y 值
@@ -59,6 +48,66 @@ def plot(data, nums):
 #线性插值
 
 data=[[0,0], [1,2]]
+
+print(Lg(data, 1.5))
+
+plot(data, 100)
+
+def plot(data, nums):
+    data_x = [data[i][0] for i in range(len(data))]
+    data_y = [data[i][1] for i in range(len(data))]
+
+    Area = [min(data_x), max(data_x)]
+
+    X = [Area[0] + 1.0 * i * (Area[1] - Area[0]) / nums for i in range(nums)]
+    X[len(X) - 1] = Area[1]
+
+    Y = [Lg(data, x) for x in X]
+
+    sns.set()  # 应用 seaborn 样式
+
+    plt.plot(X, Y, label='result')
+
+    for i in range(len(data_x)):
+        plt.plot(data_x[i], data_y[i], 'ro', label="point")
+
+    plt.savefig('Lg.jpg')
+    plt.show()
+
+#二次多项式插值
+
+data=[[0,0], [1,2], [2,3]]
+
+print(Lg(data, 1.5))
+
+plot(data, 100)
+
+#四次多项式插值
+
+data=[[0,0], [1,2], [2,3], [3,8]]
+
+print(Lg(data, 1.5))
+
+plot(data, 100)
+
+#五次多项式插值
+
+data=[[0,0], [1,2], [2,3], [3,8], [4,2]]
+print(Lg(data, 1.5))
+
+plot(data, 100)
+
+#六次多项式插值
+
+data=[[0,0], [1,2], [2,3], [3,8], [4,2], [5,7]]
+
+print(Lg(data,1.5))
+
+plot(data, 100)
+
+#七次多项式插值
+
+data=[[0,0], [1,2], [2,3], [3,8], [4,2], [5,7], [6,8]]
 
 print(Lg(data, 1.5))
 
