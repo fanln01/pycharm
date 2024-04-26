@@ -56,5 +56,3 @@ def plot(data, nums):
     plt.show()
 
 
-data = [[0, 0], [1, 2], [2, 3], [3, 8], [4, 2]]
-plot(data, 100)
