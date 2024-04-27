@@ -56,3 +56,49 @@ def plot(data, nums):
     plt.show()
 
 
+#线性插值
+
+data=[[0,0], [1,2]]
+
+print(NT(data, 1.5))
+
+plot(data, 100)
+
+#二次多项式插值
+
+data=[[0,0], [1,2], [2,3]]
+
+print(NT(data, 1.5))
+
+plot(data, 100)
+
+#四次多项式插值
+
+data=[[0,0], [1,2], [2,3], [3,8]]
+
+print(NT(data, 1.5))
+
+plot(data, 100)
+
+#五次多项式插值
+
+data=[[0,0], [1,2], [2,3], [3,8], [4,2]]
+print(Lg(data, 1.5))
+
+plot(data, 100)
+
+#六次多项式插值
+
+data=[[0,0], [1,2], [2,3], [3,8], [4,2], [5,7]]
+
+print(Lg(data,1.5))
+
+plot(data, 100)
+
+#七次多项式插值
+
+data=[[0,0], [1,2], [2,3], [3,8], [4,2], [5,7], [6,8]]
+
+print(Lg(data, 1.5))
+
+plot(data, 100)

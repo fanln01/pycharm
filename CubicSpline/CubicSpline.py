@@ -107,3 +107,5 @@ class CubicSpline:
         # standard_y = function(standard_x)
         # plt.plot(standard_x, standard_y)
         plt.show()
+
+#

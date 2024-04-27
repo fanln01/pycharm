@@ -19,39 +19,8 @@ def Lg(data, testdata):
                 af *= (1.0 * (testdata - data_x[j]) / (data_x[i] - data_x[j]))
         predict += data_y[i] * af
     return predict
-def plot(data, nums):
-    # 提取数据中的 x 和 y 值
-    data_x = [data[i][0] for i in range(len(data))]
-    data_y = [data[i][1] for i in range(len(data))]
-
-    # 确定区域范围
-    Area = [min(data_x), max(data_x)]
-
-    # 在区域范围内生成一系列 X 值
-    X = [Area[0] + 1.0 * i * (Area[1] - Area[0]) / nums for i in range(nums)]
-    X[len(X) - 1] = Area[1]
-
-    # 计算对应的 Y 值
-    Y = [Lg(data, x) for x in X]
-
-    # 绘制结果曲线
-    plt.plot(X, Y, label='result')
-
-    # 绘制数据点
-    for i in range(len(data_x)):
-        plt.plot(data_x[i], data_y[i], 'ro', label="point")
-
-    # 保存图像并显示
-    plt.savefig('Lg.jpg')
-    plt.show()
-
-#线性插值
-
-data=[[0,0], [1,2]]
-
-print(Lg(data, 1.5))
-
-plot(data, 100)
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 def plot(data, nums):
     data_x = [data[i][0] for i in range(len(data))]
@@ -74,3 +43,8 @@ def plot(data, nums):
     plt.savefig('Lg.jpg')
     plt.show()
 
+
+data = [[-5.0, -0.1923], [-4.5, -0.2118], [-4.0, -0.2353], [-3.5, -0.2642], [-3.0, -0.3], [-2.5, -0.3448], [-2.0, -0.4000], [-1.5, -0.4615], [-1.0, -0.5000], [-0.5, -0.4000], [0.0, 0.0], [0.5, 0.4000], [1.0, 0.5000], [1.5, 0.4615], [2.0, 0.4000], [2.5, 0.3448], [3.0, 0.3000], [3.5, 0.2642], [4.0, 0.2353], [4.5, 0.2118], [5.0, 0.1923]]
+print(Lg(data, 1.5))
+
+plot(data, 100)
