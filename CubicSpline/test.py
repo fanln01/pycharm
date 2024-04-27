@@ -9,7 +9,7 @@ from matplotlib.font_manager import FontProperties
 
 
 def function(x):
-    return 1 / (1 + pow(x, 2)*25)
+    return x / (1 + pow(x, 2))
     # return abs(x)
 
 
@@ -51,7 +51,7 @@ class Lagrange:
         for i in range(len(x)):
             y[i] = expression.subs('x', x[i])
         ax = plt.subplot(222)
-        ax.set_title("拉格朗日插值n=10", fontproperties=font_set)
+        ax.set_title("拉格朗日插值", fontproperties=font_set)
         plt.plot(x, y)
 
 
@@ -85,7 +85,7 @@ class PieceLinear:
             for j in range(len(draw_x)):
                 draw_y[j] = subfuns[i].subs('x', draw_x[j])
             ax1 = plt.subplot(223)
-            ax1.set_title("分段线性插值n=10", fontproperties=font_set)
+            ax1.set_title("分段线性插值", fontproperties=font_set)
             plt.plot(draw_x, draw_y)
         ax2 = plt.subplot(221)
         ax2.set_title("原函数y=f(x)", fontproperties=font_set)
@@ -181,7 +181,7 @@ class CubicSpline:
             for j in range(len(draw_x)):
                 draw_y[j] = sx[i][0].subs('x', draw_x[j])
             ax = plt.subplot(224)
-            ax.set_title("三次样条插值n=10", fontproperties=font_set)
+            ax.set_title("三次样条插值", fontproperties=font_set)
             plt.plot(draw_x, draw_y)
         plt.show()
 
@@ -189,9 +189,9 @@ class CubicSpline:
 if __name__ == "__main__":
     font_set = FontProperties(fname=r"c:\windows\fonts\simsun.ttc", size=12)
     fig = plt.figure(figsize=(8, 8))
-    test1 = Lagrange([-5, 5], 10)  # 修改为插值区间为 [-5, 5]，插值次数为 10
+    test1 = Lagrange([-5, 5], 3) 
     test1.show_result()
-    test2 = PieceLinear([-5, 5], 10)  # 修改为插值区间为 [-5, 5]，插值次数为 10
+    test2 = PieceLinear([-5, 5], 3)  
     test2.show_result()
-    test3 = CubicSpline([-5, 5], 10)  # 修改为插值区间为 [-5, 5]，插值次数为 10
+    test3 = CubicSpline([-5, 5], 3)  
     test3.show_result()
