@@ -1,197 +1,232 @@
-# -*- coding:utf-8 -*-
-"""
-@brief     : 利用拉格朗日插值、分段线性插值和三次样条插值构造插值函数
-"""
+import time
 import numpy as np
-from matplotlib import pyplot as plt
-from sympy import *
-from matplotlib.font_manager import FontProperties
+import sympy
+from sympy import symbols, plot_implicit, Eq
+from fractions import Fraction
+import matplotlib.pyplot as plt
+
+'''
+程序名称：三次样条插值算法程序
+程序功能：解决三种三次样条插值问题
+程序作者：Yaung
+'''
 
 
-def function(x):
-    return x / (1 + pow(x, 2))
-    # return abs(x)
+# 四舍五入函数
+def round_up(n, m):
+    n = str(n)
+    if len(n) - n.index(".") - 1 == m + 1:
+        n += "01"
+    n = float(n)
+    return np.round(n, m)
 
 
-class Lagrange:
-    def __init__(self, interval, n):
-        self.interval = interval  # 插值区间
-        self.num = n  # 次数
-        self.h = (interval[1] - interval[0]) / n  # 插值间隔
+while True:
+    # 界面展示
+    print("\t**********第一类固定边界(输入:1)")
+    print("\t\tS'(x0)=f0'\tS'(xn)=fn'")
+    print("\t**********第二类自由边界(输入:2)")
+    print("\t\tS''(x0)=f0''\tS''(xn)=fn''")
+    print("\t**********第三类非节点边界(输入:3)")
+    print("\t\tlimSp(x0+)=limSp(xn-)\tp=0,1,2")
+    print("\t**********退出程序(输入:4)")
 
-    def cal_wn(self):
-        xi = np.arange(self.interval[0], self.interval[1] + self.h / 2, self.h)
-        x = symbols('x')
-        wn = 1
-        for i in xi:
-            wn *= (x - i)
-        return wn
+    # 选项输入
+    choice = eval(input('请输入你的选项数字:'))
+    if choice == 4:
+        exit()  # 退出程序
+    # 输入数据的个数
+    N = eval(input('请输入数据的个数:'))
+    arr = input('请输入xk的所有值(每个值用空格隔开):')
+    X = np.array([float(i) for i in arr.split()])
+    arr = input('请输入每个xk所对应的函数值f(xk)(每个值用空格隔开):')
+    Y = np.array([float(i) for i in arr.split()])
+    C = np.array([0, 0])
+    if choice != 3:
+        arr = input('请输入两个边界条件(每个值用空格隔开):')
+        C = np.array([float(i) for i in arr.split()])
+    '''
+    测试
 
-    def cal_diff_wn(self):
-        x = symbols('x')
-        return diff(self.cal_wn(), x)
+    第二类
+    >>
+    2
+    4
+    1 2 4 5
+    1 3 4 2
+    0 0
+    3
+    <<
+    4.25
 
-    def lagrange_expression(self):
-        Lx = 0
-        x = symbols('x')
-        xi = np.arange(self.interval[0], self.interval[1] + self.h / 2, self.h)
-        diff_wn = self.cal_diff_wn()
-        wn = self.cal_wn()
-        for i in range(self.num + 1):
-            num = wn / (x - xi[i])
-            li = num / diff_wn.subs('x', xi[i])
-            Lx += li * function(xi[i])
-        return Lx
+    '''
+    # 基础公式
+    # 计算h
+    H = np.array([])
+    for i in range(0, N - 1):
+        H = np.r_[H, X[i + 1] - X[i]]
+    # 计算U
+    U = np.array([np.max])
+    for i in range(1, N - 1):
+        U = np.r_[U, round_up(H[i - 1] / (H[i] + H[i - 1]), 6)]
+    # 计算R
+    R = np.array([np.max])
+    for i in range(1, N - 1):
+        R = np.r_[R, round_up(H[i] / (H[i] + H[i - 1]), 6)]
+    # 计算G
+    G = np.array([3 * (Y[1] - Y[0]) / H[0] - H[0] / 2 * C[0]])  # 一开始第一个先按照第二类初始化
+    for i in range(1, N - 1):
+        # print(3*(U[0,i]*(Y[i+1]-Y[i])+R[0,i]*(Y[i]-Y[i-1])))
+        G = np.r_[G, 3 * (U[i] * (Y[i + 1] - Y[i]) / H[i] + R[i] * (Y[i] - Y[i - 1]) / H[i - 1])]
 
-    def show_result(self):
-        x = np.linspace(self.interval[0], self.interval[1], 100)
-        expression = self.lagrange_expression()
-        print(expression)
-        y = np.zeros((100,))
-        for i in range(len(x)):
-            y[i] = expression.subs('x', x[i])
-        ax = plt.subplot(222)
-        ax.set_title("拉格朗日插值", fontproperties=font_set)
-        plt.plot(x, y)
+    # 边界类型判断
+    if choice == 1:
+        # 第一类固定边界条件
+        # 求解方程组
+        A1 = np.array([[]])
+        for i in range(1, N - 1):
+            Ai = np.array([])
+            Ai = np.r_[Ai, [0 for j in range(i - 2)]]
+            if i > 1:
+                Ai = np.r_[Ai, R[i]]
+            Ai = np.r_[Ai, 2]
+            if i != N - 2:
+                Ai = np.r_[Ai, U[i]]
+            Ai = np.r_[Ai, [0 for j in range(N - 2 - Ai.size)]]
+            if i == 1:
+                A1 = np.c_[A1, [Ai]]
+            else:
+                A1 = np.r_[A1, [Ai]]
 
+        b1 = np.array([G[1] - R[1] * C[0]])
+        b1 = np.r_[b1, [G[i] for i in range(2, N - 2)]]
+        b1 = np.r_[b1, G[N - 2] - U[N - 2] * C[1]]
+        M = np.array([C[0]])
+        M = np.r_[M, np.linalg.solve(A1, b1)]
+        M = np.r_[M, C[1]]
+    elif choice == 2:
+        # 第二类自由边界条件
+        # 补充最后一个G
+        G = np.r_[G, 3 * (Y[N - 1] - Y[N - 2]) / H[N - 2] + H[N - 2] / 2 * C[1]]
+        # 解方程组求M
+        A2 = np.array([[2, 1]])
+        A2 = np.c_[A2, [[0 for i in range(N - 2)]]]
+        for i in range(1, N - 1):
+            Ai = np.array([])
+            Ai = np.r_[Ai, [0 for j in range(i - 1)]]
+            Ai = np.r_[Ai, [R[i], 2, U[i]]]
+            Ai = np.r_[Ai, [0 for j in range(N - Ai.size)]]
+            A2 = np.r_[A2, [Ai]]
+        # A2 = np.r_[A2,[0 for i in range(N-2)]]
+        A2 = np.r_[A2, [np.r_[[0 for i in range(N - 2)], [1, 2]]]]
 
-class PieceLinear:
-    def __init__(self, interval, n):
-        self.interval = interval  # 插值区间
-        self.num = n  # 区间个数
-        self.h = (interval[1] - interval[0]) / n  # 插值间隔
+        b2 = np.array([G[i] for i in range(N)])
+        M = np.array(np.linalg.solve(A2, b2))
+    elif choice == 3:
+        # 第三类非节点边界条件9
+        # 新增U，R，G的最后一个值
+        U = np.r_[U, H[N - 2] / (H[0] + H[N - 2])]
+        R = np.r_[R, H[0] / (H[0] + H[N - 2])]
+        G = np.r_[G, 3 * (U[N - 1] * (Y[1] - Y[0]) / H[0] + R[N - 1] * (Y[N - 1] - Y[N - 2]) / H[N - 2])]
 
-    def create_point(self):  # 给出插值点
-        x = np.arange(self.interval[0], self.interval[1] + self.h / 2, self.h)
-        y = function(x)
-        return np.stack((x, y), axis=1)
+        # 解方程组求M
+        A3 = np.array([[]])
+        for i in range(1, N):
+            Ai = np.array([])
+            if i == N - 1:
+                Ai = np.r_[Ai, U[N - 1]]
+                Ai = np.r_[Ai, [0 for j in range(i - 3)]]
+            else:
+                Ai = np.r_[Ai, [0 for j in range(i - 2)]]
+            if i > 1:
+                Ai = np.r_[Ai, R[i]]
+            Ai = np.r_[Ai, 2]
+            if i != N - 1:
+                Ai = np.r_[Ai, U[i]]
+            if i == 1:
+                Ai = np.r_[Ai, [0 for j in range(N - 2 - Ai.size)]]
+                Ai = np.r_[Ai, R[1]]
+            else:
+                Ai = np.r_[Ai, [0 for j in range(N - 1 - Ai.size)]]
+            if i == 1:
+                A3 = np.c_[A3, [Ai]]
+            else:
+                A3 = np.r_[A3, [Ai]]
+        b3 = np.array([G[i] for i in range(1, N)])
+        M = np.array(np.linalg.solve(A3, b3))
+        M = np.r_[M[N - 2], M]
 
-    def subfun(self):  # 每个区间的子函数
-        x = symbols('x')
-        subfuns = []
-        points = self.create_point()
-        for i in range(self.num):
-            subfun_i = simplify(((x - points[i + 1, 0]) * points[i, 1] / (points[i, 0] - points[i + 1, 0]) + (
-                        x - points[i, 0]) * points[i + 1, 1] / (points[i + 1, 0] - points[i, 0])))
-            subfuns.append(subfun_i)
-        return subfuns
+    # 求出全部表达式
+    x = sympy.symbols("x")  # 申明未知数"x"
 
-    def show_result(self):
-        points = self.create_point()
-        draw_y = np.zeros((20,))
-        subfuns = self.subfun()
-        for i in range(self.num):
-            draw_x = np.linspace(points[i, 0], points[i + 1, 0], 20)
-            for j in range(len(draw_x)):
-                draw_y[j] = subfuns[i].subs('x', draw_x[j])
-            ax1 = plt.subplot(223)
-            ax1.set_title("分段线性插值", fontproperties=font_set)
-            plt.plot(draw_x, draw_y)
-        ax2 = plt.subplot(221)
-        ax2.set_title("原函数y=f(x)", fontproperties=font_set)
-        standard_x = np.linspace(-5, 5, 500)
-        standard_y = function(standard_x)
-        plt.plot(standard_x, standard_y, '--')
+    S = np.array([])
+    for i in range(X.size - 1):
+        S = np.r_[S, [(H[i] + 2 * (x - X[i])) / np.power(H[i], 3) * np.power(x - X[i + 1], 2) * Y[i] + (
+                    H[i] - 2 * (x - X[i + 1])) / np.power(H[i], 3) * np.power(x - X[i], 2) * Y[i + 1] + (
+                                x - X[i]) * np.power(x - X[i + 1], 2) / np.power(H[i], 2) * M[i] + (
+                                x - X[i + 1]) * np.power(x - X[i], 2) / np.power(H[i], 2) * M[i + 1]]]
 
+    while True:
+        # 输入预测值
+        x1 = eval(input('请输入需要预测的值:'))
 
-class CubicSpline:
-    def __init__(self, interval, n):
-        self.interval = interval  # 插值区间
-        self.num = n  # 区间数
-        self.h = (interval[1] - interval[0]) / n  # 插值间隔
+        xl = 0
+        xlid = 0
+        xr = 0
+        xrid = 0
+        for i in range(X.size):
+            if X[i] > x1:
+                xr = X[i]
+                xrid = i
+                xl = X[i - 1]
+                xlid = i - 1
+                break
+        y = (H[xlid] + 2 * (x - X[xlid])) / np.power(H[xlid], 3) * np.power(x - X[xrid], 2) * Y[xlid] + (
+                    H[xlid] - 2 * (x - X[xrid])) / np.power(H[xlid], 3) * np.power(x - X[xlid], 2) * Y[xrid] + (
+                        x - X[xlid]) * np.power(x - X[xrid], 2) / np.power(H[xlid], 2) * M[xlid] + (
+                        x - X[xrid]) * np.power(x - X[xlid], 2) / np.power(H[xlid], 2) * M[xrid]
+        y1 = y.evalf(subs={x: x1})
 
-    def create_point(self):  # 给出插值点
-        x = np.arange(self.interval[0], self.interval[1] + self.h / 2, self.h)
-        y = function(x)
-        return np.stack((x, y), axis=1)
+        # 打印数据
+        print("方程组的解为：")
+        print(M)
+        print("三次样条插值的表达式为：")
+        print(S)
 
-    def cal_mu_and_lamda(self):  # 计算出lamda和mu
-        return 1 / 2  # 所有的h均相通
+        # 打印预测值
+        print("预测值为：")
+        print(y1)
 
-    def cal_diff2(self, xi):  # 计算出二阶导
-        x = Symbol('x')
-        expr = function(x)
-        dexpr = diff(expr, x)
-        return diff(dexpr, x).subs('x', xi)
+        # 画图
+        picture = plt.figure()
+        # plt.ion()
+        plt.scatter(X, Y, marker='.', c='b')
+        # plt.pause(0.01)
 
-    def end_M(self):
-        return 0, 0  # 自然边界条件
+        # 画出预测值
+        plt.scatter(x1, y1, marker='.', c='r')
+        # plt.pause(0.01)
 
-    def cal_d(self):  # 计算结果向量
-        points = self.create_point()
-        d = np.zeros((self.num - 1, 1))
-        for i in range(1, self.num):
-            d[i - 1] = 6 / (2 * self.h * self.h) * (points[i + 1, 1] + points[i - 1, 1] - 2 * points[i, 1])
-        M0, Mn = self.end_M()
-        d[0] = d[0] - self.cal_mu_and_lamda() * M0
-        d[-1] = d[-1] - self.cal_mu_and_lamda() * Mn
-        return d
+        # 画函数曲线
+        for i in range(S.size):
+            XX = np.arange(X[i], X[i + 1], 0.01)
+            XX = np.array(XX)
+            YY = np.array([])
+            for j in range(XX.size):
+                Z = S[i]
+                K = Z.evalf(subs={x: XX[j]})
+                YY = np.r_[YY, K]
+            plt.plot(XX, YY, color='k')
+            # plt.pause(0.01)
 
-    def cal_M_coff(self):  # 计算系数矩阵
-        M_coff = np.zeros((self.num - 1, self.num - 1))
-        mu = lamda = self.cal_mu_and_lamda()
-        for i in range(1, self.num - 2):
-            M_coff[i, i - 1] = self.cal_mu_and_lamda()
-            M_coff[i, i + 1] = self.cal_mu_and_lamda()
-            M_coff[i, i] = 2
-        M_coff[0, 0] = M_coff[-1, -1] = 2
-        M_coff[0, 1] = M_coff[-1, -2] = mu
-        return M_coff
-
-    def cal_M(self):  #
-        M_coff = self.cal_M_coff()
-        d = self.cal_d()
-        M = np.linalg.solve(M_coff, d)
-        M0 = self.end_M()[0]
-        Mn = self.end_M()[1]
-        M = np.vstack((M0, M))
-        M = np.vstack((M, Mn))
-        return M
-
-    def cal_diff2_sx(self):
-        sx0 = self.end_M()[0]
-        sxn = self.end_M()[1]
-        x = Symbol('x')
-        diff2_sx = [None] * self.num
-        M = self.cal_M()
-        points = self.create_point()
-        for i in range(0, self.num):
-            diff2_sx[i] = M[i, 0] * (points[i, 0] - x) / (self.h) + M[i + 1, 0] * (x - points[i - 1, 0]) / (self.h)
-        return diff2_sx
-
-    def cal_sx(self):
-        x = Symbol('x')
-        sx = []
-        M = self.cal_M()
-        points = self.create_point()
-        for i in range(1, len(points)):
-            Ai = 1 / self.h * (points[i - 1, 1] - 1 / 6 * M[i - 1] * pow(self.h, 2))
-            Bi = 1 / self.h * (points[i, 1] - 1 / 6 * M[i] * pow(self.h, 2))
-            sxi = (M[i - 1] * pow(points[i, 0] - x, 3) + M[i] * pow(x - points[i - 1, 0], 3)) / (6 * self.h) + Ai * (
-                        points[i, 0] - x) + Bi * (x - points[i - 1, 0])
-            sx.append(sxi)
-        return sx
-
-    def show_result(self):
-        sx = self.cal_sx()
-        points = self.create_point()
-        draw_y = np.zeros((500,))
-        for i in range(len(sx)):
-            draw_x = np.linspace(points[i, 0], points[i + 1, 0], 500)
-            for j in range(len(draw_x)):
-                draw_y[j] = sx[i][0].subs('x', draw_x[j])
-            ax = plt.subplot(224)
-            ax.set_title("三次样条插值", fontproperties=font_set)
-            plt.plot(draw_x, draw_y)
-        plt.show()
-
-
-if __name__ == "__main__":
-    font_set = FontProperties(fname=r"c:\windows\fonts\simsun.ttc", size=12)
-    fig = plt.figure(figsize=(8, 8))
-    test1 = Lagrange([-5, 5], 3) 
-    test1.show_result()
-    test2 = PieceLinear([-5, 5], 3)  
-    test2.show_result()
-    test3 = CubicSpline([-5, 5], 3)  
-    test3.show_result()
+        # plt.pause(0.01)
+        # plt.ioff()  # 关闭interactive mode
+        plt.show(block=True)
+        tmpFlag = eval(input('输入\'1\'继续预测，输入\'2\'重新执行程序。'))
+        if tmpFlag != 1:
+            plt.close()
+            break
+        plt.close()
+    tmpFlag = eval(input('输入\'1\'继续程序，输入\'2\'退出程序。'))
+    if tmpFlag != 1:
+        break
