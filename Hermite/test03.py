@@ -1,7 +1,7 @@
 import math
 
 # 节点数据
-nodes = {i: (i,) for i in range(1, 37)}  # 修改这一行,包含节点35和36
+nodes = {i: (i,) for i in range(1, 37)}  # 1-36号节点
 nodes[32] = (32, 33)  # 机器人A和B的驻地
 nodes[33] = (34,)  # 图书馆
 
@@ -47,22 +47,25 @@ def robot_dp(robot):
     capacity = robots[robot]['capacity']
     start = robots[robot]['start'] - 1
     library = 33  # 图书馆节点编号
-
+    
     # 初始化动态规划数组
     dp = [[[math.inf] * (capacity + 1) for _ in range(len(nodes))] for _ in range(len(nodes))]
     dp[start][start][0] = 0
-
+    print("测试")
     # 动态规划
     for j in range(capacity + 1):
         for i in range(len(nodes)):
             for k in range(len(nodes)):
+                print(f"i: {i}, j: {j}, k: {k}")
                 if dp[i][k][j] == math.inf:
                     continue
-                for n in nodes[k+1]:
+                for n in nodes[k + 1]:
                     n -= 1
                     if n == k or dist[k][n] == math.inf:
                         continue
                     new_j = j + return_books[n]
+                    print(f"  new_j: {new_j}")
+
                     if new_j > capacity:
                         continue
                     # 在这里添加打印语句
@@ -89,6 +92,7 @@ def robot_dp(robot):
 
 # 计算每个机器人的最优路径
 for robot in robots:
+    print(f"Calculating optimal path for robot {robot}...")
     min_time, path = robot_dp(robot)
     print(f"Robot {robot}:")
     print(f"  Minimum time: {min_time:.2f}")
