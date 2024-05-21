@@ -24,7 +24,8 @@ distance_matrix =[
 [2800, 3100, 4200, 4700, 5500, 2200, 2200, 2300, 3900, 4700, 5500, 1500, 1100, 3900, 4900, 1300, 400, 0, 3700, 4300, 1700, 1400, 300, 2400, 3200, 3900, 2200, 2000, 1100, 2500, 3100, 3600, 2900, 3200, 1000, 3200],
 [4700, 4400, 3300, 3300, 2500, 5100, 4600, 3400, 1600, 1500, 1800, 4600, 4200, 500, 1200, 5000, 4100, 3700, 0, 600, 4800, 4500, 3400, 1300, 600, 1000, 4400, 4000, 3100, 1700, 1100, 1300, 5300, 900, 3100, 500],
 [4600, 4300, 3200, 2700, 1900, 5700, 5200, 4000, 2200, 2100, 1200, 5200, 4800, 1100, 600, 5600, 4700, 4300, 600, 0, 5000, 5000, 4000, 1900, 1200, 400, 4500, 4100, 3200, 1800, 1200, 700, 5200, 1500, 3700, 1100],
-[3300, 3600, 4700, 5200, 6000, 2300, 2700, 3600, 5200, 6000, 6200, 1600, 1600, 5200, 5600, 1100, 900, 1300, 4800, 5000, 0, 300, 1400, 3500, 4300, 4600, 500, 900, 1800, 3200, 3800, 4300, 3000, 4500, 2300, 4300],
+[3300, 3600, 4700, 5200, 6000, 230
+ 0, 2700, 3600, 5200, 6000, 6200, 1600, 1600, 5200, 5600, 1100, 900, 1300, 4800, 5000, 0, 300, 1400, 3500, 4300, 4600, 500, 900, 1800, 3200, 3800, 4300, 3000, 4500, 2300, 4300],
 [3000, 3300, 4400, 4900, 5700, 2400, 2400, 3300, 4900, 5700, 6200, 1700, 1300, 4900, 5600, 1400, 600, 1000, 4500, 5000, 300, 0, 1100, 3200, 4000, 4600, 800, 900, 1800, 3200, 3800, 4300, 3100, 4200, 2000, 4000],
 [3100, 3400, 4500, 5000, 5800, 2500, 2500, 2600, 4000, 4800, 5200, 1800, 1400, 3900, 4600, 1600, 700, 300, 3400, 4000, 1400, 1100, 0, 2100, 2900, 3600, 1900, 1700, 800, 2200, 2800, 3300, 3200, 3300, 1300, 2900],
 [5000, 4700, 3600, 4100, 3800, 4600, 4600, 3700, 1900, 2700, 3100, 3900, 3500, 1800, 2500, 3700, 2800, 2400, 1300, 1900, 3500, 3200, 2100, 0, 800, 1900, 3400, 3000, 2100, 700, 1300, 1800, 5300, 1200, 3400, 800],
@@ -64,7 +65,7 @@ routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
 demand_callback_index = routing.RegisterUnaryTransitCallback(
     lambda i: demands[manager.IndexToNode(i)])
 routing.AddDimensionWithVehicleCapacity(
-    demand_callback_index, 0, [10]*12, True, 'Capacity')
+    demand_callback_index, 0, [10]*num_vehicles, True, 'Capacity')
 
 # 设置默认的搜索参数和用于寻找第一个解决方案的启发式方法
 search_parameters = pywrapcp.DefaultRoutingSearchParameters()
@@ -86,7 +87,7 @@ route_distances = []
 total_load = 0
 for vehicle_id in range(num_vehicles):
     index = routing.Start(vehicle_id)
-    print(f"第{vehicle_id}号车")
+    print(f"第{vehicle_id+1}趟")
     route_distance, route_load = 0, 0
     route_loads = [(manager.IndexToNode(index), 0)]
     while not routing.IsEnd(index):
@@ -112,18 +113,39 @@ G = nx.DiGraph()
 for i in range(len(distance_matrix)):
     G.add_node(i)
 
-# 添加边
+# 定义颜色列表
+colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k', 'gray', 'orange', 'purple', 'brown', 'pink']
+
+# 添加边,为每条路线设置不同的颜色
 for vehicle_id in range(num_vehicles):
     index = routing.Start(vehicle_id)
+    route_color = colors[vehicle_id % len(colors)]  # 选择颜色
     while not routing.IsEnd(index):
         previous_index = index
         index = solution.Value(routing.NextVar(index))
-        G.add_edge(manager.IndexToNode(previous_index), manager.IndexToNode(index))
+        G.add_edge(manager.IndexToNode(previous_index), manager.IndexToNode(index), color=route_color)
 
-# 绘制图形
-pos = nx.spring_layout(G)
-nx.draw(G, pos, with_labels=True, node_size=500, node_color='lightblue', font_size=12, arrows=True)
+# 设置图形大小
+plt.figure(figsize=(12, 12))
+
+# 使用 circular_layout 布局算法
+pos = nx.circular_layout(G, scale=2)
+
+# 绘制节点
+nx.draw_networkx_nodes(G, pos, node_size=700, node_color='lightblue')
+
+# 绘制边,根据color属性设置边的颜色
+edges = G.edges()
+colors = [G[u][v]['color'] for u,v in edges]
+nx.draw_networkx_edges(G, pos, edgelist=edges, edge_color=colors, arrows=True, arrowsize=20, width=2)
+
+# 绘制标签
+nx.draw_networkx_labels(G, pos, font_size=14, font_weight='bold')
+
+# 调整坐标轴范围以适应布局
+plt.axis('equal')
+plt.axis('off')
 
 # 显示图形
-plt.axis('off')
+plt.tight_layout()
 plt.show()
