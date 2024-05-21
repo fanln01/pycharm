@@ -14,7 +14,7 @@ y = np.array([67.052, 68.008, 69.803, 72.024, 73.400, 72.063, 74.669, 74.487, 74
 param0 = [0, 0, 0]
 def quadratic_fun(s, x):  # s代表待定系数列表
     k1, k2, b = s
-    return k1 * x ** 2 + k2 * x + b
+    return k1 * x  + b
 
 # 三次
 param1 = [0, 0, 0, 0]
@@ -41,7 +41,7 @@ def dist(a, fun, x, y):
 funs = [quadratic_fun, cubic_fun, fpower_fun, myfuns]
 params = [param0, param1, param2, param3]
 colors = ['blue', 'red', 'black', 'green']
-fun_name = ['quadratic_fun', 'cubic_fun', '4power_fun', 'a*exp(-b*(t-c))']
+fun_name = ['一次', '二次', '三次', 'a*exp(-b*(t-c))']
 
 # 作图
 plt.figure()
@@ -49,7 +49,7 @@ plt.title(u'石油产量年际变化')
 plt.xlabel(u't/h')
 plt.ylabel(u'T/摄氏度')
 # 坐标轴的范围xmin, xmax, ymin, ymax
-plt.axis([0, 11, 66, 77])
+plt.axis([0, 11, 60, 80])
 plt.grid(True)
 plt.plot(x, y, 'k.', label='sample data')
 
@@ -61,15 +61,7 @@ for i, (func, param, color, name) in enumerate(zip(funs, params, colors, fun_nam
                                                                  (y - func(var[0], x)).std(),  # 残差的标准差
                                                                  (abs(y - func(var[0], x))).mean()))  # 残差绝对值的均值
 
-    # Printing expressions of the functions
-    if name == 'quadratic_fun':
-        print("Expression: k1 * x ** 2 + k2 * x + b")
-    elif name == 'cubic_fun':
-        print("Expression: k1 * x ** 3 + k2 * x**2 + k3 * x + b")
-    elif name == '4power_fun':
-        print("Expression: k1 * x ** 4 + k2 * x**3 + k3 * x**2 + k4 * x + b")
-    elif name == 'a*exp(-b*(t-c))':
-        print("Expression: a * np.exp(-b * (x - c))")
+    
 
 plt.legend(loc='upper left')
 plt.show()
